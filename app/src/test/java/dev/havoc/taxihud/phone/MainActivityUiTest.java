@@ -5,7 +5,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertEquals;
 
 import android.content.ComponentName;
+import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +23,7 @@ import org.robolectric.annotation.Config;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 @RunWith(RobolectricTestRunner.class)
 @Config(sdk = 35)
@@ -54,12 +57,29 @@ public final class MainActivityUiTest {
         MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
         String guide = activity.getString(R.string.notification_access_guide_body);
 
-        assertTrue(guide.contains("alerting"));
-        assertTrue(guide.contains("silent"));
-        assertTrue(guide.contains("conversations"));
-        assertTrue(guide.contains("important ongoing"));
-        assertTrue(guide.contains("specific apps"));
+        assertTrue(guide.contains("Notifications"));
+        assertTrue(guide.contains("Conversations"));
+        assertTrue(guide.contains("Real-time"));
+        assertTrue(guide.contains("Silent"));
+        assertTrue(guide.contains("See all apps"));
+        assertFalse(guide.contains("important ongoing"));
         assertFalse(guide.contains("does not offer a per-source-app filter"));
+    }
+
+    @Test
+    public void russianNotificationGuideUsesPixelSettingsLabels() {
+        MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
+        Configuration configuration = new Configuration(activity.getResources().getConfiguration());
+        configuration.setLocale(Locale.forLanguageTag("ru"));
+        Context russianContext = activity.createConfigurationContext(configuration);
+        String guide = russianContext.getString(R.string.notification_access_guide_body);
+
+        assertTrue(guide.contains("«Уведомления»"));
+        assertTrue(guide.contains("«Разговоры»"));
+        assertTrue(guide.contains("«В реальном времени»"));
+        assertTrue(guide.contains("«Без звука»"));
+        assertTrue(guide.contains("«Посмотреть все приложения»"));
+        assertFalse(guide.contains("персистентные"));
     }
 
     @Test

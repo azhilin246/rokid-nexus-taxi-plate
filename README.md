@@ -54,8 +54,9 @@ not run notification listeners inside a work profile; enterprise policy may also
 separate profile and stops while locked, so its notifications are available only when the
 OS exposes them. The in-app
 **How to limit notification access** opens Android's listener-detail screen for Taxi Plate.
-There the user can filter alerting, silent, conversation, and important ongoing
-notifications and choose specific source apps. The guide also explains the profile limits
+There the user can filter the four categories shown by Pixel Settings: Notifications,
+Conversations, Real-time, and Silent. **See all apps** controls notification delivery from
+individual source apps. The guide also explains the profile limits
 described by Android's
 [`NotificationListenerService` contract](https://developer.android.com/reference/android/service/notification/NotificationListenerService).
 

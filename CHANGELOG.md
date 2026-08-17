@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.6.5
+
+- Match the notification-access guide to the exact labels exposed by Pixel Android 16
+  Settings: Notifications, Conversations, Real-time, Silent, and See all apps.
+
 ## 0.6.4
 
 - Correct the notification-access guide: Android can filter a listener by notification

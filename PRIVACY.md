@@ -12,8 +12,8 @@ applies across personal, work, and private profiles, but only to notifications A
 actually delivers to the personal-profile listener.
 
 Android's notification-listener detail screen can grant or revoke access, choose which
-notification categories are exposed (alerting, silent, conversations, and important
-ongoing notifications), and restrict which source apps Taxi Plate may read. These system
+notification categories are exposed (Notifications, Conversations, Real-time, and Silent
+in Pixel Settings), and use **See all apps** to restrict individual source apps. These system
 controls are the primary OS-level boundary; Taxi Plate's own package switches add another
 check before parsing or diagnostics. Work-profile policy and Private Space state can
 further prevent cross-profile delivery.
