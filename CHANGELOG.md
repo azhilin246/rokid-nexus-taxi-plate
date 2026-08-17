@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.4
+
+- Correct the notification-access guide: Android can filter a listener by notification
+  category and by specific source apps.
+- Open Taxi Plate's system notification-listener detail page directly, with a fallback to
+  the general listener list.
+
 ## 0.6.3
 
 - Preview every package requested by an imported adapter bundle and require the user to

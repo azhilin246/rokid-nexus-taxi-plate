@@ -1,10 +1,17 @@
 package dev.havoc.taxihud.phone;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertEquals;
 
+import android.content.ComponentName;
+import android.content.Intent;
+import android.provider.Settings;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.havoc.rokid.plugin.taxihudpin.R;
 
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -40,6 +47,31 @@ public final class MainActivityUiTest {
         assertTrue(labels.contains("IMPORT SETTINGS"));
         assertTrue(labels.contains("Export adapter logs"));
         assertTrue(labels.contains("Uninstall Taxi Plate"));
+    }
+
+    @Test
+    public void notificationGuideDescribesAndroidCategoryAndAppFilters() {
+        MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
+        String guide = activity.getString(R.string.notification_access_guide_body);
+
+        assertTrue(guide.contains("alerting"));
+        assertTrue(guide.contains("silent"));
+        assertTrue(guide.contains("conversations"));
+        assertTrue(guide.contains("important ongoing"));
+        assertTrue(guide.contains("specific apps"));
+        assertFalse(guide.contains("does not offer a per-source-app filter"));
+    }
+
+    @Test
+    public void notificationAccessActionTargetsTaxiPlateListenerDetails() {
+        MainActivity activity = Robolectric.buildActivity(MainActivity.class).setup().get();
+        Intent intent = activity.notificationAccessSettingsIntent();
+
+        assertEquals(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS, intent.getAction());
+        assertEquals(
+                new ComponentName(activity, TaxiNotificationListenerService.class)
+                        .flattenToString(),
+                intent.getStringExtra(Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME));
     }
 
     private static void collectLabels(View view, List<String> labels) {

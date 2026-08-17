@@ -142,7 +142,7 @@ public final class MainActivity extends Activity {
                 this::openNexus);
         addAction(content, R.string.open_notification_access,
                 R.string.open_notification_access_subtitle,
-                () -> startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
+                this::openNotificationAccessSettings);
         addAction(content, R.string.limit_notification_access,
                 R.string.limit_notification_access_subtitle,
                 this::showNotificationAccessGuide);
@@ -451,9 +451,26 @@ public final class MainActivity extends Activity {
                 .setMessage(R.string.notification_access_guide_body)
                 .setNegativeButton(android.R.string.cancel, null)
                 .setPositiveButton(R.string.open_notification_access, (dialog, which) ->
-                        startActivity(new Intent(
-                                Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)))
+                        openNotificationAccessSettings())
                 .show();
+    }
+
+    private void openNotificationAccessSettings() {
+        Intent detail = notificationAccessSettingsIntent();
+        if (detail.resolveActivity(getPackageManager()) != null) {
+            startActivity(detail);
+        } else {
+            startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS));
+        }
+    }
+
+    Intent notificationAccessSettingsIntent() {
+        ComponentName listener = new ComponentName(
+                this, TaxiNotificationListenerService.class);
+        return new Intent(Settings.ACTION_NOTIFICATION_LISTENER_DETAIL_SETTINGS)
+                .putExtra(
+                        Settings.EXTRA_NOTIFICATION_LISTENER_COMPONENT_NAME,
+                        listener.flattenToString());
     }
 
     private Button primaryButton(int label, Runnable action) {

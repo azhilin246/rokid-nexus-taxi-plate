@@ -12,8 +12,8 @@ android {
         applicationId = "com.havoc.rokid.plugin.taxihudpin"
         minSdk = 31
         targetSdk = 36
-        versionCode = 15
-        versionName = "0.6.3"
+        versionCode = 16
+        versionName = "0.6.4"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 

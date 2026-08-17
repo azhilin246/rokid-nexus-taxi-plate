@@ -11,10 +11,12 @@ confirmation; newly requested packages are disabled by default. The same package
 applies across personal, work, and private profiles, but only to notifications Android
 actually delivers to the personal-profile listener.
 
-Android's standard Notification access screen grants or revokes listener access globally;
-it does not provide Taxi Plate with a per-source-app system filter. Disabling a source
-app's notifications in Android settings blocks them system-wide. Work-profile policy and
-Private Space state can further prevent cross-profile delivery.
+Android's notification-listener detail screen can grant or revoke access, choose which
+notification categories are exposed (alerting, silent, conversations, and important
+ongoing notifications), and restrict which source apps Taxi Plate may read. These system
+controls are the primary OS-level boundary; Taxi Plate's own package switches add another
+check before parsing or diagnostics. Work-profile policy and Private Space state can
+further prevent cross-profile delivery.
 
 The plugin extracts only the ride fields needed for its card and PIN. Current ride
 state, adapter configuration, and recent diagnostics stay in the plugin's private

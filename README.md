@@ -53,8 +53,10 @@ not run notification listeners inside a work profile; enterprise policy may also
 [Private Space](https://source.android.com/docs/security/features/private-space) is a
 separate profile and stops while locked, so its notifications are available only when the
 OS exposes them. The in-app
-**How to limit notification access** guide links to Android's global Notification access
-screen and explains the system-level alternatives described by Android's
+**How to limit notification access** opens Android's listener-detail screen for Taxi Plate.
+There the user can filter alerting, silent, conversation, and important ongoing
+notifications and choose specific source apps. The guide also explains the profile limits
+described by Android's
 [`NotificationListenerService` contract](https://developer.android.com/reference/android/service/notification/NotificationListenerService).
 
 Bundles use `schemaVersion: 1`. Each adapter declares `id`, `displayName`, `packages`,
