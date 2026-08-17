@@ -9,6 +9,8 @@
 - Add an in-app guide to Android's system notification-access controls and profile limits.
 - Run imported regex rules with RE2/J and cap matching input to prevent regex denial of
   service.
+- Add password-encrypted settings export and import for migrations between debug and
+  store-signed installs. The backup excludes rides, history, logs, and system permissions.
 
 ## 0.6.2
 

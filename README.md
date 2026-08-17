@@ -84,6 +84,18 @@ are committed together; invalid imports leave the working configuration unchange
 
 The APK has no launcher activity. Nexus opens its exported settings activity explicitly.
 
+## Settings backup
+
+The Nexus settings screen can export and import a portable `.rpb` file. It is encrypted
+with AES-256-GCM using a user-chosen password derived with PBKDF2-HMAC-SHA256. The app does
+not save the password. The backup includes imported adapters, adapter and package choices,
+the automatic trip-pin preference, and the selected language. It deliberately excludes
+the current ride, ride history, notification diagnostics, and Android/Nexus permissions.
+
+Use this export before uninstalling a debug-signed build and installing a store-signed
+build. Android notification access and Nexus plugin approval still need to be granted to
+the new installation.
+
 ## Build and verify
 
 ```powershell

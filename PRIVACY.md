@@ -22,6 +22,13 @@ app storage. Taxi Plate does not upload notification contents or ride data to a
 server. Diagnostic export happens only after an explicit user action and may contain
 sensitive ride details; the exported file is controlled by the user.
 
+The settings screen can create a portable backup after an explicit user action. It contains
+imported adapter definitions, adapter and package choices, the automatic trip-pin
+preference, and language. It excludes current rides, ride history, diagnostics, and system
+permissions. The file is encrypted with AES-256-GCM under a user-provided password derived
+with PBKDF2-HMAC-SHA256; the password is not stored by Taxi Plate. Import replaces only the
+settings represented in the backup.
+
 Imported regular expressions run through the linear-time RE2/J engine, and the text passed
 to matching is capped at 8192 characters per notification.
 

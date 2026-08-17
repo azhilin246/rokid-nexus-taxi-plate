@@ -214,6 +214,61 @@ public final class AdapterRepository {
         edit.commit();
     }
 
+    public synchronized PortableState exportPortableState() {
+        String importedBundle = preferences.getString(KEY_IMPORTED, "");
+        if (importedBundle == null) {
+            importedBundle = "";
+        }
+        AdapterBundle imported = importedBundle.trim().isEmpty()
+                ? emptyImported()
+                : decodeImported(importedBundle);
+        LinkedHashSet<String> adapterIds = new LinkedHashSet<>();
+        LinkedHashSet<String> packages = new LinkedHashSet<>();
+        for (NotificationAdapterConfig adapter : builtins().adapters) {
+            adapterIds.add(adapter.id);
+            packages.addAll(adapter.packages);
+        }
+        for (NotificationAdapterConfig adapter : imported.adapters) {
+            adapterIds.add(adapter.id);
+            packages.addAll(adapter.packages);
+        }
+        return new PortableState(
+                importedBundle,
+                filteredOverrides(enabledOverrides(), adapterIds),
+                filteredOverrides(packageOverrides(), packages));
+    }
+
+    public synchronized void importPortableState(PortableState state) {
+        require(state != null, "Adapter settings are missing");
+        String rawImported = state.importedBundle == null ? "" : state.importedBundle;
+        AdapterBundle imported = rawImported.trim().isEmpty()
+                ? emptyImported()
+                : decodeImported(rawImported);
+        Map<String, Boolean> enabled = validatedOverrides(
+                state.enabledOverrides, adapterIds(builtins(), imported), "adapter");
+        Map<String, Boolean> allowed = validatedOverrides(
+                state.allowedPackageOverrides, packageNames(builtins(), imported), "package");
+        SharedPreferences.Editor edit = preferences.edit();
+        if (rawImported.trim().isEmpty()) {
+            edit.remove(KEY_IMPORTED);
+        } else {
+            edit.putString(KEY_IMPORTED, gson.toJson(imported));
+        }
+        if (enabled.isEmpty()) {
+            edit.remove(KEY_ENABLED);
+        } else {
+            edit.putString(KEY_ENABLED, gson.toJson(enabled, ENABLED_MAP));
+        }
+        if (allowed.isEmpty()) {
+            edit.remove(KEY_ALLOWED_PACKAGES);
+        } else {
+            edit.putString(KEY_ALLOWED_PACKAGES, gson.toJson(allowed, ENABLED_MAP));
+        }
+        if (!edit.commit()) {
+            throw new IllegalStateException("Could not restore adapter settings");
+        }
+    }
+
     private AdapterBundle builtins() {
         try (InputStreamReader reader = new InputStreamReader(
                 context.getAssets().open(BUILTIN_ASSET), StandardCharsets.UTF_8)) {
@@ -253,6 +308,73 @@ public final class AdapterRepository {
             return decoded == null ? new LinkedHashMap<>() : new LinkedHashMap<>(decoded);
         } catch (JsonParseException exception) {
             return new LinkedHashMap<>();
+        }
+    }
+
+    private static Map<String, Boolean> filteredOverrides(
+            Map<String, Boolean> source, Set<String> allowedKeys) {
+        LinkedHashMap<String, Boolean> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Boolean> entry : source.entrySet()) {
+            if (allowedKeys.contains(entry.getKey()) && entry.getValue() != null) {
+                result.put(entry.getKey(), entry.getValue());
+            }
+        }
+        return result;
+    }
+
+    private static Map<String, Boolean> validatedOverrides(
+            Map<String, Boolean> source, Set<String> allowedKeys, String kind) {
+        if (source == null) {
+            return new LinkedHashMap<>();
+        }
+        require(source.size() <= 256, "Too many " + kind + " overrides");
+        LinkedHashMap<String, Boolean> result = new LinkedHashMap<>();
+        for (Map.Entry<String, Boolean> entry : source.entrySet()) {
+            require(entry.getKey() != null && entry.getKey().length() <= 255
+                            && allowedKeys.contains(entry.getKey()),
+                    "Unknown " + kind + ": " + entry.getKey());
+            require(entry.getValue() != null, "Invalid " + kind + " override");
+            result.put(entry.getKey(), entry.getValue());
+        }
+        return result;
+    }
+
+    private static Set<String> adapterIds(AdapterBundle first, AdapterBundle second) {
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+        for (NotificationAdapterConfig adapter : first.adapters) {
+            result.add(adapter.id);
+        }
+        for (NotificationAdapterConfig adapter : second.adapters) {
+            result.add(adapter.id);
+        }
+        return result;
+    }
+
+    private static Set<String> packageNames(AdapterBundle first, AdapterBundle second) {
+        LinkedHashSet<String> result = new LinkedHashSet<>();
+        for (NotificationAdapterConfig adapter : first.adapters) {
+            result.addAll(adapter.packages);
+        }
+        for (NotificationAdapterConfig adapter : second.adapters) {
+            result.addAll(adapter.packages);
+        }
+        return result;
+    }
+
+    public static final class PortableState {
+        public final String importedBundle;
+        public final Map<String, Boolean> enabledOverrides;
+        public final Map<String, Boolean> allowedPackageOverrides;
+
+        public PortableState(String importedBundle, Map<String, Boolean> enabledOverrides,
+                Map<String, Boolean> allowedPackageOverrides) {
+            this.importedBundle = importedBundle == null ? "" : importedBundle;
+            this.enabledOverrides = enabledOverrides == null
+                    ? new LinkedHashMap<>()
+                    : new LinkedHashMap<>(enabledOverrides);
+            this.allowedPackageOverrides = allowedPackageOverrides == null
+                    ? new LinkedHashMap<>()
+                    : new LinkedHashMap<>(allowedPackageOverrides);
         }
     }
 

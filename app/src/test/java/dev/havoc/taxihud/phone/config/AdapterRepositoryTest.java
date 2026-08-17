@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import dev.havoc.taxihud.phone.parse.NotificationAdapterEngineTest;
 import java.util.Set;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -78,5 +79,32 @@ public final class AdapterRepositoryTest {
         assertEquals(1, repository.adapters().size());
         assertFalse(repository.handlesPackage("ru.yandex.go"));
         assertFalse(repository.handlesPackage("com.example.localcab"));
+    }
+
+    @Test public void portableStateRestoresImportedAdaptersAndChoices() {
+        repository.importJson(NotificationAdapterEngineTest.customBundle(
+                "local-cab", "com.example.localcab"), Set.of());
+        repository.setEnabled("yandex-go", false);
+        AdapterRepository.PortableState backup = repository.exportPortableState();
+
+        repository.resetImported();
+        repository.setEnabled("yandex-go", true);
+        repository.importPortableState(backup);
+
+        assertEquals(2, repository.adapters().size());
+        assertFalse(repository.handlesPackage("ru.yandex.go"));
+        assertFalse(repository.handlesPackage("com.example.localcab"));
+    }
+
+    @Test public void invalidPortableStateDoesNotReplaceExistingSettings() {
+        repository.setEnabled("yandex-go", false);
+        AdapterRepository.PortableState invalid = new AdapterRepository.PortableState(
+                "", Map.of("unknown", true), Map.of());
+
+        try {
+            repository.importPortableState(invalid);
+        } catch (IllegalArgumentException expected) { }
+
+        assertFalse(repository.handlesPackage("ru.yandex.go"));
     }
 }

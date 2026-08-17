@@ -14,11 +14,13 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.provider.Settings;
+import android.text.InputType;
 import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -34,13 +36,19 @@ import com.havoc.rokid.plugin.taxihudpin.R;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
+import dev.havoc.taxihud.phone.backup.PortableBackupCodec;
+import dev.havoc.taxihud.phone.backup.TaxiSettingsBackup;
 import dev.havoc.taxihud.phone.config.AdapterImportPreview;
 import dev.havoc.taxihud.phone.config.AdapterBundleValidator;
 import dev.havoc.taxihud.phone.config.AdapterRepository;
@@ -54,11 +62,15 @@ public final class MainActivity extends Activity {
     private static final String NEXUS_PACKAGE = "com.anezium.rokidbus.phone";
     private static final int IMPORT_ADAPTERS_REQUEST = 41;
     private static final int POST_NOTIFICATIONS_REQUEST = 42;
+    private static final int EXPORT_BACKUP_REQUEST = 43;
+    private static final int IMPORT_BACKUP_REQUEST = 44;
+    private static final int MAX_BACKUP_BYTES = 1024 * 1024;
     private static final String NEXUS_RELEASES =
             "https://github.com/Anezium/Rokid-Nexus/releases";
 
     private final Map<Integer, TextView> statusValues = new LinkedHashMap<>();
     private final Map<Integer, View> statusDots = new LinkedHashMap<>();
+    private final ExecutorService backupExecutor = Executors.newSingleThreadExecutor();
     private final BroadcastReceiver statusReceiver = new BroadcastReceiver() {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -106,6 +118,12 @@ public final class MainActivity extends Activity {
         super.onStop();
     }
 
+    @Override
+    protected void onDestroy() {
+        backupExecutor.shutdownNow();
+        super.onDestroy();
+    }
+
     private void buildUi() {
         windowColors();
         statusValues.clear();
@@ -140,6 +158,7 @@ public final class MainActivity extends Activity {
                 this::syncNotification);
 
         addAdapterSettings(content);
+        addBackupSettings(content);
         addLogSettings(content);
 
         addSection(content, R.string.section_plugin);
@@ -316,6 +335,24 @@ public final class MainActivity extends Activity {
         content.addView(clearButton, topMargin(4));
     }
 
+    private void addBackupSettings(LinearLayout content) {
+        addSection(content, R.string.section_backup);
+        LinearLayout warning = NexusUi.INSTANCE.card(this);
+        warning.addView(NexusUi.INSTANCE.cardBody(
+                this, getString(R.string.backup_privacy_warning)));
+        content.addView(warning, NexusUi.INSTANCE.block());
+
+        Button export = NexusUi.INSTANCE.outlinePillButton(
+                this, getString(R.string.export_settings));
+        export.setOnClickListener(view -> openBackupExport());
+        content.addView(export, topMargin(10));
+
+        Button restore = NexusUi.INSTANCE.outlinePillButton(
+                this, getString(R.string.import_settings));
+        restore.setOnClickListener(view -> openBackupImport());
+        content.addView(restore, topMargin(8));
+    }
+
     private void addSection(LinearLayout root, int label) {
         if (root.getChildCount() > 0) {
             addGap(root, 24);
@@ -477,20 +514,206 @@ public final class MainActivity extends Activity {
         startActivityForResult(intent, IMPORT_ADAPTERS_REQUEST);
     }
 
+    private void openBackupExport() {
+        Intent intent = new Intent(Intent.ACTION_CREATE_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("application/json")
+                .putExtra(Intent.EXTRA_TITLE, "taxi-plate-settings.rpb");
+        startActivityForResult(intent, EXPORT_BACKUP_REQUEST);
+    }
+
+    private void openBackupImport() {
+        Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT)
+                .addCategory(Intent.CATEGORY_OPENABLE)
+                .setType("application/json");
+        startActivityForResult(intent, IMPORT_BACKUP_REQUEST);
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode != IMPORT_ADAPTERS_REQUEST || resultCode != RESULT_OK
-                || data == null || data.getData() == null) {
+        if (resultCode != RESULT_OK || data == null || data.getData() == null) {
+            return;
+        }
+        Uri uri = data.getData();
+        if (requestCode == EXPORT_BACKUP_REQUEST) {
+            promptExportPassword(uri);
+            return;
+        }
+        if (requestCode == IMPORT_BACKUP_REQUEST) {
+            promptImportPassword(uri);
+            return;
+        }
+        if (requestCode != IMPORT_ADAPTERS_REQUEST) {
             return;
         }
         try {
-            String json = readBounded(data.getData());
+            String json = readBounded(uri);
             showAdapterImportPreview(json);
         } catch (IOException | IllegalArgumentException exception) {
             Toast.makeText(this, getString(R.string.adapters_import_failed,
                     exception.getMessage()), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void promptExportPassword(Uri uri) {
+        EditText first = passwordField();
+        EditText repeat = passwordField();
+        LinearLayout fields = dialogFields(first, repeat);
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.export_settings)
+                .setMessage(R.string.backup_password_export_message)
+                .setView(fields)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.export_settings, (dialog, which) -> {
+                    char[] password = first.getText().toString().toCharArray();
+                    char[] confirmation = repeat.getText().toString().toCharArray();
+                    if (password.length < 8 || !Arrays.equals(password, confirmation)) {
+                        Arrays.fill(password, '\0');
+                        Arrays.fill(confirmation, '\0');
+                        Toast.makeText(this, R.string.backup_password_invalid,
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    Arrays.fill(confirmation, '\0');
+                    exportBackup(uri, password);
+                })
+                .show();
+    }
+
+    private void promptImportPassword(Uri uri) {
+        EditText field = passwordField();
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.import_settings)
+                .setMessage(R.string.backup_password_import_message)
+                .setView(field)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.read_backup, (dialog, which) -> {
+                    char[] password = field.getText().toString().toCharArray();
+                    if (password.length == 0) {
+                        Toast.makeText(this, R.string.backup_password_required,
+                                Toast.LENGTH_LONG).show();
+                        return;
+                    }
+                    importBackup(uri, password);
+                })
+                .show();
+    }
+
+    private EditText passwordField() {
+        EditText field = new EditText(this);
+        field.setSingleLine(true);
+        field.setHint(R.string.backup_password_hint);
+        field.setInputType(InputType.TYPE_CLASS_TEXT
+                | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        return field;
+    }
+
+    private LinearLayout dialogFields(EditText first, EditText repeat) {
+        LinearLayout layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        int padding = dp(24);
+        layout.setPadding(padding, 0, padding, 0);
+        layout.addView(first, NexusUi.INSTANCE.block());
+        repeat.setHint(R.string.backup_password_repeat_hint);
+        layout.addView(repeat, topMargin(8));
+        return layout;
+    }
+
+    private void exportBackup(Uri uri, char[] password) {
+        backupExecutor.execute(() -> {
+            try {
+                TaxiSettingsBackup backup = new TaxiSettingsBackup(
+                        new AdapterRepository(this).exportPortableState(),
+                        new TaxiPlatePreferences(this).autoTripPin(),
+                        TaxiLocale.selectedLanguageTag(this));
+                String encoded = PortableBackupCodec.encrypt(
+                        TaxiSettingsBackup.APP_ID, backup.encode(), password);
+                try (OutputStream output = getContentResolver().openOutputStream(uri, "wt")) {
+                    if (output == null) {
+                        throw new IOException(getString(R.string.import_file_unavailable));
+                    }
+                    output.write(encoded.getBytes(StandardCharsets.UTF_8));
+                }
+                runOnUiThread(() -> Toast.makeText(
+                        this, R.string.settings_exported, Toast.LENGTH_LONG).show());
+            } catch (Exception exception) {
+                runOnUiThread(() -> Toast.makeText(
+                        this,
+                        getString(R.string.backup_failed, safeMessage(exception)),
+                        Toast.LENGTH_LONG).show());
+            } finally {
+                Arrays.fill(password, '\0');
+            }
+        });
+    }
+
+    private void importBackup(Uri uri, char[] password) {
+        backupExecutor.execute(() -> {
+            try {
+                String encoded = readBackupBounded(uri);
+                TaxiSettingsBackup backup = TaxiSettingsBackup.decode(
+                        PortableBackupCodec.decrypt(
+                                TaxiSettingsBackup.APP_ID, encoded, password));
+                runOnUiThread(() -> confirmBackupImport(backup));
+            } catch (Exception exception) {
+                runOnUiThread(() -> Toast.makeText(
+                        this,
+                        getString(R.string.backup_failed, safeMessage(exception)),
+                        Toast.LENGTH_LONG).show());
+            } finally {
+                Arrays.fill(password, '\0');
+            }
+        });
+    }
+
+    private void confirmBackupImport(TaxiSettingsBackup backup) {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.import_settings_confirm_title)
+                .setMessage(R.string.import_settings_confirm_body)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.import_settings_confirm, (dialog, which) -> {
+                    try {
+                        new AdapterRepository(this).importPortableState(backup.adapters);
+                        new TaxiPlatePreferences(this).setAutoTripPin(backup.autoTripPin);
+                        TaxiLocale.setLanguage(this, backup.languageTag);
+                        Toast.makeText(this, R.string.settings_imported,
+                                Toast.LENGTH_LONG).show();
+                        recreate();
+                    } catch (IllegalArgumentException | IllegalStateException exception) {
+                        Toast.makeText(this,
+                                getString(R.string.backup_failed, safeMessage(exception)),
+                                Toast.LENGTH_LONG).show();
+                    }
+                })
+                .show();
+    }
+
+    private String readBackupBounded(Uri uri) throws IOException {
+        try (InputStream input = getContentResolver().openInputStream(uri);
+                ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+            if (input == null) {
+                throw new IOException(getString(R.string.import_file_unavailable));
+            }
+            byte[] buffer = new byte[8192];
+            int total = 0;
+            int read;
+            while ((read = input.read(buffer)) != -1) {
+                total += read;
+                if (total > MAX_BACKUP_BYTES) {
+                    throw new IOException(getString(R.string.backup_file_too_large));
+                }
+                output.write(buffer, 0, read);
+            }
+            return output.toString(StandardCharsets.UTF_8.name());
+        }
+    }
+
+    private static String safeMessage(Exception exception) {
+        String message = exception.getMessage();
+        return message == null || message.trim().isEmpty()
+                ? exception.getClass().getSimpleName()
+                : message;
     }
 
     private void showAdapterImportPreview(String json) {

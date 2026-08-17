@@ -35,6 +35,9 @@ public final class MainActivityUiTest {
         assertTrue(labels.contains("ru.yandex.go"));
         assertTrue(labels.contains("Test widget"));
         assertTrue(labels.contains("IMPORT JSON"));
+        assertTrue(labels.contains("BACKUP AND RESTORE"));
+        assertTrue(labels.contains("EXPORT SETTINGS"));
+        assertTrue(labels.contains("IMPORT SETTINGS"));
         assertTrue(labels.contains("Export adapter logs"));
         assertTrue(labels.contains("Uninstall Taxi Plate"));
     }
