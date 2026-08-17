@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import android.content.Context;
 import dev.havoc.taxihud.phone.parse.NotificationAdapterEngineTest;
+import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,6 +20,8 @@ public final class AdapterRepositoryTest {
         Context context = RuntimeEnvironment.getApplication();
         repository = new AdapterRepository(context);
         repository.resetImported();
+        repository.setPackageAllowed("ru.yandex.go", true);
+        repository.setPackageAllowed("ru.yandex.taxi", true);
     }
     @Test public void defaultsToBuiltInAdapter() {
         assertEquals(1, repository.adapters().size());
@@ -44,6 +47,24 @@ public final class AdapterRepositoryTest {
         } catch (IllegalArgumentException expected) { }
         assertTrue(repository.handlesPackage("com.example.localcab"));
         assertEquals(2, repository.adapters().size());
+    }
+
+    @Test public void importRequiresAnExplicitChoiceForEveryDeclaredPackage() {
+        String bundle = NotificationAdapterEngineTest.customBundle(
+                "local-cab", "com.example.localcab").replace(
+                        "[\"com.example.localcab\"]",
+                        "[\"com.example.localcab\",\"com.example.secret\"]");
+
+        AdapterImportPreview preview = repository.previewImportJson(bundle);
+        assertEquals(1, preview.adapterCount);
+        assertEquals(2, preview.packages.size());
+
+        repository.importJson(bundle, Set.of("com.example.localcab"));
+
+        assertTrue(repository.handlesPackage("com.example.localcab"));
+        assertFalse(repository.handlesPackage("com.example.secret"));
+        repository.setPackageAllowed("com.example.secret", true);
+        assertTrue(repository.handlesPackage("com.example.secret"));
     }
 
     @Test public void resetRemovesImportedOverridesButPreservesBuiltInOverride() {

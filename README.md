@@ -10,7 +10,8 @@ and no Bluetooth permission in this project.
 
 ## Runtime flow
 
-1. Android delivers notifications from packages enabled in the adapter repository.
+1. Android delivers notifications and Taxi Plate rejects every package not explicitly
+   allowed in its settings before extracting text or writing diagnostics.
 2. `NotificationAdapterEngine` applies the matching JSON rules and `TaxiCoordinator`
    persists the resulting ride state.
 3. `NexusTaxiHudTransport` briefly connects a `NexusPluginClient`, sends one
@@ -37,9 +38,24 @@ the launcher card. The trip-end notification clears the timer automatically.
 The app ships with an enabled Yandex Go adapter as
 `app/src/main/assets/adapters/builtin_notification_adapters.json`; it is data, not a
 hard-coded parser. Settings opened from Nexus list every adapter and allow each one to be
-enabled or disabled independently. **Import JSON** uses Android's document picker and
-merges adapters by `id`, so a bundle can add Uber, a local taxi app, or replace the
-built-in definition. **Reset imported adapters** returns to the built-in set.
+enabled or disabled independently. Each configured package also has its own allow switch.
+**Import JSON** uses Android's document picker, validates the bundle, then shows every
+package it requests before anything is persisted. New packages start unchecked and the
+user chooses which ones Taxi Plate may parse. Confirmed adapters are merged by `id`, so a
+bundle can add Uber, a local taxi app, or replace the built-in definition. **Reset imported
+adapters** returns to the built-in set.
+
+Package choices are matched before notification extras are read and before diagnostic
+logging. A choice applies to notifications with that package name from personal, work, or
+private profiles when Android delivers them to the personal-profile listener. Android does
+not run notification listeners inside a work profile; enterprise policy may also block
+[cross-profile notification access](https://developer.android.com/work/managed-profiles).
+[Private Space](https://source.android.com/docs/security/features/private-space) is a
+separate profile and stops while locked, so its notifications are available only when the
+OS exposes them. The in-app
+**How to limit notification access** guide links to Android's global Notification access
+screen and explains the system-level alternatives described by Android's
+[`NotificationListenerService` contract](https://developer.android.com/reference/android/service/notification/NotificationListenerService).
 
 Bundles use `schemaVersion: 1`. Each adapter declares `id`, `displayName`, `packages`,
 `eventRules`, `fieldRules`, optional truncation rules, activation requirements, and
@@ -50,9 +66,11 @@ select a regex capture `group` and a closed list of transforms:
 `NORMALIZE_RANGE`, and `CLEAN_VEHICLE`. See
 `docs/notification-adapter-example.json` for a complete custom-provider example.
 
-Imports are limited to 256 KiB, 32 adapters, and bounded rule counts/pattern sizes. The
-entire bundle is validated before it replaces persisted configuration; invalid imports
-leave the working configuration unchanged.
+Imports are limited to 256 KiB, 32 adapters, and bounded rule counts/pattern sizes. Imported
+patterns are validated and executed by RE2/J, which guarantees linear-time matching and
+rejects unsupported backtracking features such as lookbehind and backreferences. Matching
+also uses at most 8192 notification-text characters. The entire bundle and package choice
+are committed together; invalid imports leave the working configuration unchanged.
 
 ## Setup
 
@@ -61,7 +79,8 @@ leave the working configuration unchanged.
 2. Install the Taxi Plate plugin APK on the phone.
 3. In Nexus, approve the `surfaces` capability for Taxi Plate.
 4. Open Taxi Plate settings from Nexus and grant Android notification-listener access.
-5. Grant the separate Android permission that lets Taxi Plate post its own notification.
+5. Review the package switches and allow only the ride apps Taxi Plate may parse.
+6. Grant the separate Android permission that lets Taxi Plate post its own notification.
 
 The APK has no launcher activity. Nexus opens its exported settings activity explicitly.
 

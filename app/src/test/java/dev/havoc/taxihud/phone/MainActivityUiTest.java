@@ -31,6 +31,8 @@ public final class MainActivityUiTest {
         assertTrue(labels.contains("Language"));
         assertTrue(labels.contains("Use phone language"));
         assertTrue(labels.contains("Notification access"));
+        assertTrue(labels.contains("How to limit notification access"));
+        assertTrue(labels.contains("ru.yandex.go"));
         assertTrue(labels.contains("Test widget"));
         assertTrue(labels.contains("IMPORT JSON"));
         assertTrue(labels.contains("Export adapter logs"));

@@ -35,10 +35,13 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.LinkedHashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import dev.havoc.taxihud.phone.config.AdapterImportPreview;
 import dev.havoc.taxihud.phone.config.AdapterBundleValidator;
 import dev.havoc.taxihud.phone.config.AdapterRepository;
 import dev.havoc.taxihud.phone.config.NotificationAdapterConfig;
@@ -122,6 +125,9 @@ public final class MainActivity extends Activity {
         addAction(content, R.string.open_notification_access,
                 R.string.open_notification_access_subtitle,
                 () -> startActivity(new Intent(Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)));
+        addAction(content, R.string.limit_notification_access,
+                R.string.limit_notification_access_subtitle,
+                this::showNotificationAccessGuide);
         addAction(content, R.string.enable_android_notifications,
                 R.string.enable_android_notifications_subtitle,
                 this::requestNotificationPostingPermission);
@@ -237,6 +243,39 @@ public final class MainActivity extends Activity {
             card.addView(state, stateParams);
             card.setOnClickListener(view -> {
                 repository.setEnabled(adapter.id, !adapter.enabled);
+                buildUi();
+                refreshStatuses();
+            });
+            content.addView(card, topMargin(8));
+        }
+
+        LinearLayout packageNotice = NexusUi.INSTANCE.card(this);
+        packageNotice.addView(NexusUi.INSTANCE.cardBody(
+                this, getString(R.string.package_access_profiles_note)));
+        content.addView(packageNotice, topMargin(12));
+
+        for (String packageName : repository.configuredPackages()) {
+            boolean allowed = repository.isPackageAllowed(packageName);
+            LinearLayout card = NexusUi.INSTANCE.pressableCard(this);
+            LinearLayout labels = new LinearLayout(this);
+            labels.setOrientation(LinearLayout.VERTICAL);
+            labels.addView(NexusUi.INSTANCE.rowTitle(this, packageName));
+            labels.addView(BusTheme.INSTANCE.gap(this, 4));
+            labels.addView(NexusUi.INSTANCE.rowSub(
+                    this, getString(R.string.package_access_row_subtitle)));
+            card.addView(labels, new LinearLayout.LayoutParams(
+                    0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+            TextView state = NexusUi.INSTANCE.metaLabel(
+                    this,
+                    getString(allowed ? R.string.adapter_on : R.string.adapter_off),
+                    allowed ? NexusUi.GREEN_DIM : NexusUi.INK3);
+            LinearLayout.LayoutParams stateParams = new LinearLayout.LayoutParams(
+                    ViewGroup.LayoutParams.WRAP_CONTENT,
+                    ViewGroup.LayoutParams.WRAP_CONTENT);
+            stateParams.setMarginStart(dp(12));
+            card.addView(state, stateParams);
+            card.setOnClickListener(view -> {
+                repository.setPackageAllowed(packageName, !allowed);
                 buildUi();
                 refreshStatuses();
             });
@@ -369,6 +408,17 @@ public final class MainActivity extends Activity {
                 .show();
     }
 
+    private void showNotificationAccessGuide() {
+        new AlertDialog.Builder(this)
+                .setTitle(R.string.notification_access_guide_title)
+                .setMessage(R.string.notification_access_guide_body)
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.open_notification_access, (dialog, which) ->
+                        startActivity(new Intent(
+                                Settings.ACTION_NOTIFICATION_LISTENER_SETTINGS)))
+                .show();
+    }
+
     private Button primaryButton(int label, Runnable action) {
         Button button = NexusUi.INSTANCE.pillButton(this, getString(label), false);
         button.setOnClickListener(view -> action.run());
@@ -436,15 +486,59 @@ public final class MainActivity extends Activity {
         }
         try {
             String json = readBounded(data.getData());
-            int count = new AdapterRepository(this).importJson(json);
-            Toast.makeText(this, getString(R.string.adapters_imported, count),
-                    Toast.LENGTH_LONG).show();
-            buildUi();
-            refreshStatuses();
+            showAdapterImportPreview(json);
         } catch (IOException | IllegalArgumentException exception) {
             Toast.makeText(this, getString(R.string.adapters_import_failed,
                     exception.getMessage()), Toast.LENGTH_LONG).show();
         }
+    }
+
+    private void showAdapterImportPreview(String json) {
+        AdapterRepository repository = new AdapterRepository(this);
+        AdapterImportPreview preview = repository.previewImportJson(json);
+        String[] packages = preview.packages.toArray(new String[0]);
+        boolean[] checked = new boolean[packages.length];
+        Set<String> configured = new LinkedHashSet<>(repository.configuredPackages());
+        Set<String> selected = new LinkedHashSet<>();
+        for (int index = 0; index < packages.length; index++) {
+            checked[index] = configured.contains(packages[index])
+                    && repository.isPackageAllowed(packages[index]);
+            if (checked[index]) {
+                selected.add(packages[index]);
+            }
+        }
+        new AlertDialog.Builder(this)
+                .setTitle(getString(
+                        R.string.import_package_confirmation_title,
+                        preview.adapterCount))
+                .setMultiChoiceItems(packages, checked, (dialog, which, isChecked) -> {
+                    if (isChecked) {
+                        selected.add(packages[which]);
+                    } else {
+                        selected.remove(packages[which]);
+                    }
+                })
+                .setNegativeButton(android.R.string.cancel, null)
+                .setPositiveButton(R.string.import_package_confirmation_confirm,
+                        (dialog, which) -> {
+                            try {
+                                int count = repository.importJson(json, selected);
+                                Toast.makeText(
+                                        this,
+                                        getString(
+                                                R.string.adapters_imported_with_packages,
+                                                count,
+                                                selected.size()),
+                                        Toast.LENGTH_LONG).show();
+                                buildUi();
+                                refreshStatuses();
+                            } catch (IllegalArgumentException | IllegalStateException exception) {
+                                Toast.makeText(this, getString(
+                                        R.string.adapters_import_failed,
+                                        exception.getMessage()), Toast.LENGTH_LONG).show();
+                            }
+                        })
+                .show();
     }
 
     private String readBounded(Uri uri) throws IOException {

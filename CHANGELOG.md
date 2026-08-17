@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.6.3
+
+- Preview every package requested by an imported adapter bundle and require the user to
+  choose which packages Taxi Plate may parse.
+- Apply package choices before reading notification extras or recording diagnostics,
+  including matching notifications delivered from work and private profiles.
+- Add an in-app guide to Android's system notification-access controls and profile limits.
+- Run imported regex rules with RE2/J and cap matching input to prevent regex denial of
+  service.
+
 ## 0.6.2
 
 - Replace test fixtures with clearly synthetic ride data.

@@ -41,6 +41,10 @@
     <string name="open_nexus_subtitle">Доступ, подключение и параметры плагинов</string>
     <string name="open_notification_access">Доступ к уведомлениям</string>
     <string name="open_notification_access_subtitle">Разрешить чтение уведомлений приложений такси</string>
+    <string name="limit_notification_access">Как ограничить доступ к уведомлениям</string>
+    <string name="limit_notification_access_subtitle">Фильтры приложений, настройки Android и профили</string>
+    <string name="notification_access_guide_title">Ограничение доступа Taxi Plate</string>
+    <string name="notification_access_guide_body">1. Используйте переключатели пакетов в разделе «Адаптеры уведомлений». Taxi Plate проверяет их до передачи текста в парсер или диагностический журнал. Переключатель действует для уведомлений, которые Android передаёт из личного, рабочего и приватного профилей.\n\n2. Android выдаёт Taxi Plate доступ listener целиком; в стандартном Android здесь нет фильтра по приложениям-источникам. Кнопка ниже открывает системный экран, где доступ можно отозвать полностью.\n\n3. Чтобы на уровне системы заблокировать один источник, откройте Настройки Android → Приложения → нужное приложение → Уведомления и отключите их. Эти уведомления перестанут показываться и в остальных местах.\n\n4. Оставьте Taxi Plate в личном профиле. Android не запускает notification listener внутри рабочего профиля, а администратор рабочего профиля может запретить передачу уведомлений между профилями.\n\n5. Private Space является отдельным профилем и останавливается, пока заблокирован. Taxi Plate может обработать его уведомления, только если Android передаёт их listener личного профиля.</string>
     <string name="enable_android_notifications">Разрешить уведомления Android</string>
     <string name="enable_android_notifications_subtitle">Показывать текущую поездку на телефоне</string>
     <string name="test_widget">Тестовый виджет</string>
@@ -57,6 +61,8 @@
     <string name="adapter_builtin">встроенный</string>
     <string name="adapter_imported">импортированный</string>
     <string name="adapter_summary">%1$s · %2$s</string>
+    <string name="package_access_profiles_note">Выберите пакеты, уведомления которых Taxi Plate может парсить. Проверка выполняется до парсинга и записи диагностического лога и действует на совпадающие уведомления, которые Android передаёт из личного, рабочего или приватного профиля.</string>
+    <string name="package_access_row_subtitle">Разрешить парсинг и локальную диагностику этого пакета</string>
     <string name="adapter_on">ВКЛ</string>
     <string name="adapter_off">ВЫКЛ</string>
     <string name="enable_adapter">Включить адаптер</string>
@@ -67,6 +73,9 @@
     <string name="reset_adapters_confirm">Сбросить</string>
     <string name="adapters_reset_done">Восстановлен встроенный набор адаптеров</string>
     <string name="adapters_imported">Импортировано адаптеров: %1$d</string>
+    <string name="adapters_imported_with_packages">Импортировано адаптеров: %1$d · разрешено пакетов: %2$d</string>
+    <string name="import_package_confirmation_title">Импорт адаптеров: %1$d. Выберите пакеты для парсинга</string>
+    <string name="import_package_confirmation_confirm">Импортировать выбранное</string>
     <string name="adapters_import_failed">Не удалось импортировать JSON: %1$s</string>
     <string name="import_file_unavailable">Файл недоступен</string>
     <string name="import_file_too_large">Файл превышает 256 КБ</string>

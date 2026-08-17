@@ -17,7 +17,7 @@ one named Nexus plugin APK, and prints its SHA-256. Installation is opt-in with
 | Nexus contract | API 3 `surfaces` service, no launcher intent, no Bluetooth permission, no CXR dependency, and one Gradle module. |
 | PIN rendering | Medium top-right PIN with bounded plate, vehicle, ETA/waiting status, adapter-defined TTL/source, and fire-and-forget delivery. |
 | Dismissal | One silent Android notification mirrors active state; swipe dismissal and the launcher tap action both cancel it and hide the PIN. |
-| Adapter engine | Built-in compatibility, custom package matching, ETA/waiting/lifecycle rules, invalid import rejection, merging, and independent toggles. |
+| Adapter engine | Built-in compatibility, explicit package choices, cross-profile package filtering, RE2/J hostile-pattern safety, bounded input, invalid import rejection, merging, and independent toggles. |
 | Ride state | Manual hide, suppression, replacement, restore, countdown scheduling, and expiry. |
 | Diagnostics | Structured parser fields, retention, JSONL export, clear, and content URI. |
 
@@ -42,9 +42,11 @@ Complete these checks with Rokid Nexus already onboarded on phone and glasses.
 | 13 | Swipe away the Taxi Plate Android notification | The saved ride becomes dismissed and Nexus receives `hidePin`. |
 | 14 | Send a test widget from plugin settings | A synthetic Android notification and ride PIN are shown. |
 | 15 | Put glasses to sleep, then post an update | Nexus accepts and holds the PIN, then delivers it after glasses reconnect. |
-| 16 | Import a valid second-provider JSON bundle | The new adapter is listed independently and begins matching without an APK update. |
-| 17 | Import malformed/unsupported JSON | Import is rejected and all previously working adapters remain unchanged. |
-| 18 | Export diagnostics | JSONL contains raw notification fields, adapter identity, parser result, and state decisions. |
+| 16 | Import a valid second-provider JSON bundle | Before saving, Taxi Plate shows every requested package unchecked; only selected packages begin matching. |
+| 17 | Disable a package in Taxi Plate and post matching notifications from personal, work, and available private profiles | None of the delivered matching notifications is parsed or written to diagnostics. Re-enabling the package restores processing for every profile Android exposes. |
+| 18 | Open **How to limit notification access** | The guide explains app filters, global Android listener access, source-app notification blocking, work-profile policy, and locked Private Space, and its button opens Notification access. |
+| 19 | Import malformed JSON, unsupported lookbehind/backreference rules, or an oversized bundle | Import is rejected and all previously working adapters and package choices remain unchanged. |
+| 20 | Export diagnostics | JSONL contains raw fields only for allowed packages, plus adapter identity, parser result, and state decisions. |
 
 Record Nexus phone/glasses versions, Android/Rokid software versions, date, and result.
 Do not mark hardware checks passed from unit tests alone.
