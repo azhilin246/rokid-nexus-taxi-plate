@@ -2,7 +2,7 @@
 
 Taxi Plate is a single phone-side [Rokid Nexus](https://github.com/Anezium/Rokid-Nexus)
 plugin. It reads notifications through configuration-driven adapters, keeps one current
-ride state across multiple enabled providers, and publishes a native Nexus PIN. Rokid Nexus is the only app that owns the
+ride state across multiple enabled providers, and publishes a native Nexus pin. Rokid Nexus is the only app that owns the
 Bluetooth/CXR link and the only permanent renderer installed on the glasses.
 
 There is no Taxi Plate APK for the glasses, no embedded helper, no Hi Rokid authorization,
@@ -16,21 +16,21 @@ and no Bluetooth permission in this project.
    persists the resulting ride state.
 3. `NexusTaxiHudTransport` briefly connects a `NexusPluginClient`, sends one
    `showPin` or `hidePin`, and immediately disconnects.
-4. Nexus keeps the text PIN in the top-right corner independently of the plugin process.
+4. Nexus keeps the text pin in the top-right corner independently of the plugin process.
 5. The Nexus phone and glasses hubs own transport, arbitration, placement, and rendering.
 
 Opening Taxi Plate from the Nexus launcher shows the current ride status. Before pickup,
-the action clears the Android notification and plate PIN. During a trip, the card keeps the
-remaining travel time visible even when no PIN is showing; one center tap creates the small
-arrival-timer PIN. Back only closes the launcher surface and does not dismiss the ride.
+the action clears the Android notification and plate pin. During a trip, the card keeps the
+remaining travel time visible even when no pin is showing; one center tap creates the small
+arrival-timer pin. Back only closes the launcher surface and does not dismiss the ride.
 
-The medium PIN contains the plate, vehicle, and ETA/waiting status. It survives launcher
+The medium pin contains the plate, vehicle, and ETA/waiting status. It survives launcher
 and surface changes, sleeping glasses, and the Taxi Plate process disconnecting; each update
 refreshes its 30-minute TTL. The phone also shows one silent, dismissible Android
-notification for the current ride. At trip start the plate PIN is removed. The arrival
-timer PIN can be shown manually or automatically through the plugin setting. It uses the
+notification for the current ride. At trip start the plate pin is removed. The arrival
+timer pin can be shown manually or automatically through the plugin setting. It uses the
 localized `Until arrival / X min` (or hours plus minutes) layout and refreshes on minute
-boundaries. Swiping its phone notification hides only that PIN; trip progress remains in
+boundaries. Swiping its phone notification hides only that pin; trip progress remains in
 the launcher card. The trip-end notification clears the timer automatically.
 
 ## Notification adapters
@@ -77,7 +77,7 @@ are committed together; invalid imports leave the working configuration unchange
 
 ## Setup
 
-1. Install and onboard a current Rokid Nexus release with PIN support,
+1. Install and onboard a current Rokid Nexus release with pin support,
    including its one glasses hub.
 2. Install the Taxi Plate plugin APK on the phone.
 3. In Nexus, approve the `surfaces` capability for Taxi Plate.

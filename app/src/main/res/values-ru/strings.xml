@@ -1,7 +1,7 @@
 <resources>
     <string name="app_name">Taxi Plate</string>
-    <string name="app_description">Универсальный плагин Rokid Nexus: извлекает поездки из уведомлений настраиваемых приложений, показывает карточку в лаунчере и PIN в углу.</string>
-    <string name="plugin_header_subtitle">Пин поездки для Rokid Nexus · v%1$s</string>
+    <string name="app_description">Универсальный плагин Rokid Nexus: извлекает поездки из уведомлений настраиваемых приложений, показывает карточку в лаунчере и закреп в углу.</string>
+    <string name="plugin_header_subtitle">Закреп поездки для Rokid Nexus · v%1$s</string>
     <string name="notification_channel_name">Текущая поездка Taxi Plate</string>
     <string name="notification_channel_description">Тихое уведомление с данными текущей поездки</string>
 
@@ -30,7 +30,7 @@
     <string name="section_backup">Резервная копия</string>
     <string name="section_plugin">Плагин</string>
 
-    <string name="backup_privacy_warning">Зашифрованная копия содержит настройки Taxi Plate, импортированные адаптеры, разрешения пакетов, настройку автопина и язык. Текущая поездка, история, логи уведомлений и системные разрешения Nexus в неё не входят. Храните файл и пароль в секрете.</string>
+    <string name="backup_privacy_warning">Зашифрованная копия содержит настройки Taxi Plate, импортированные адаптеры, разрешения пакетов, настройку автоматического закрепа и язык. Текущая поездка, история, логи уведомлений и системные разрешения Nexus в неё не входят. Храните файл и пароль в секрете.</string>
     <string name="export_settings">Экспортировать настройки</string>
     <string name="import_settings">Импортировать настройки</string>
     <string name="backup_password_export_message">Задайте пароль не короче 8 символов. Он нигде не сохраняется и не может быть восстановлен.</string>
@@ -41,7 +41,7 @@
     <string name="backup_password_required">Введите пароль резервной копии</string>
     <string name="read_backup">Прочитать копию</string>
     <string name="import_settings_confirm_title">Заменить настройки Taxi Plate?</string>
-    <string name="import_settings_confirm_body">Импортированные адаптеры, выбор адаптеров и пакетов, настройка автопина и язык будут заменены. Текущая поездка и логи не изменятся.</string>
+    <string name="import_settings_confirm_body">Импортированные адаптеры, выбор адаптеров и пакетов, настройка автоматического закрепа и язык будут заменены. Текущая поездка и логи не изменятся.</string>
     <string name="import_settings_confirm">Импортировать</string>
     <string name="settings_exported">Зашифрованная копия настроек сохранена</string>
     <string name="settings_imported">Настройки Taxi Plate восстановлены</string>
@@ -55,7 +55,7 @@
     <string name="language_english">Английский</string>
     <string name="language_russian">Русский</string>
     <string name="auto_trip_pin_title">Показывать таймер прибытия автоматически</string>
-    <string name="auto_trip_pin_subtitle">Создавать маленький пин на очках в начале поездки</string>
+    <string name="auto_trip_pin_subtitle">Создавать маленький закреп на очках в начале поездки</string>
     <string name="open_nexus">Открыть Rokid Nexus</string>
     <string name="open_nexus_subtitle">Доступ, подключение и параметры плагинов</string>
     <string name="open_notification_access">Доступ к уведомлениям</string>
@@ -67,7 +67,7 @@
     <string name="enable_android_notifications">Разрешить уведомления Android</string>
     <string name="enable_android_notifications_subtitle">Показывать текущую поездку на телефоне</string>
     <string name="test_widget">Тестовый виджет</string>
-    <string name="test_widget_subtitle">Проверить карточку и пин на очках</string>
+    <string name="test_widget_subtitle">Проверить карточку и закреп на очках</string>
     <string name="sync_notification">Синхронизировать уведомления</string>
     <string name="sync_notification_subtitle">Повторно обработать активные уведомления</string>
     <string name="export_notification_log">Экспорт логов адаптеров</string>

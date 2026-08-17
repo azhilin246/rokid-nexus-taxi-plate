@@ -34,5 +34,5 @@
 
 - Add the phone-only Taxi Plate plugin for Rokid Nexus.
 - Parse configurable ride-provider notifications and keep the current ride state.
-- Show ride details as a Nexus card and maintain compact plate or arrival-time PINs.
+- Show ride details as a Nexus card and maintain compact plate or arrival-time pins.
 - Add localized settings, notification diagnostics, and adapter import/export.

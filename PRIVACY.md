@@ -18,7 +18,7 @@ controls are the primary OS-level boundary; Taxi Plate's own package switches ad
 check before parsing or diagnostics. Work-profile policy and Private Space state can
 further prevent cross-profile delivery.
 
-The plugin extracts only the ride fields needed for its card and PIN. Current ride
+The plugin extracts only the ride fields needed for its card and pin. Current ride
 state, adapter configuration, and recent diagnostics stay in the plugin's private
 app storage. Taxi Plate does not upload notification contents or ride data to a
 server. Diagnostic export happens only after an explicit user action and may contain
